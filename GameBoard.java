@@ -2,85 +2,134 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GameBoard extends JFrame {
-    private static final int SIZE = 8;
-    private JPanel[][] squares = new JPanel[SIZE][SIZE];
-    private ImageIcon exampleIcon;
-    public String[][] piecesArray;
-
+    public int SIZE = 8;
+    private JPanel[][] squares = new JPanel[SIZE][SIZE]; 
+    private String[][] piecesArray;
 
     public GameBoard() {
-        setTitle("Chess Board");
-        setSize(600, 600);
+        setTitle("Poke Board");
+        setSize(750, 750);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new GridLayout(SIZE, SIZE));
+        setLayout(new GridLayout(SIZE, SIZE)); 
 
-       
-
-        // create your 2d Array to store your image variables and assign positions
-        // add your code here
-        // this line of code initializes a new 2D Array of Strings the size of 1 row and 2 columns
-        // your 2D array must be a minimum of 6 rows x 2 columns
-        // you may add a row for every image if you'd like to have every square be a different color/image
-
-        piecesArray = new String[1][2];
-        piecesArray[0][0]= "temp2.png";
-        piecesArray[0][1]= "HP:200";
-
-        //print the contents of your 2D array
-        //this is a requirement to show your 2D array is not sorted at the beginning of your program
-
-        for (int i = 0; i < piecesArray.length; i++) {
-            for (int j = 0; j < piecesArray[i].length; j++) {
-                System.out.println("piecesArray[" + i + "][" + j + "] = " + piecesArray[i][j]);
-            }
-        }
-
-        exampleIcon = new ImageIcon(piecesArray[0][0]); // Load image file
-
-        initializeBoard();
-    }
-
-    private void initializeBoard() {
         for (int row = 0; row < SIZE; row++) {
             for (int col = 0; col < SIZE; col++) {
-                squares[row][col] = new JPanel(new BorderLayout());
-
-                // creates the checkered pattern with the two colors
-                // you can add more colors or take away any you'd like
-                
-                if (row >= 2 && row <= 5) {
-                    squares[row][col].setBackground(new Color(139, 69, 19)); // brown
-                } else if ((row + col) % 2 == 0) {
-                    squares[row][col].setBackground(new Color(55, 255, 55)); //dark green
-                } else {
-                    squares[row][col].setBackground(new Color(200, 255, 200)); //lighter green
-                }
-
-
-                // this is where your sorting method will be called 
-                // you will use the column 2 values to arrange your images to the board
-                // be sure to sort them before you add them onto the board 
-                // you will use a loop to add to your 2D Array, below is an example of how to add ONE image to ONE square
-                
-                // Adding an image to specific positions (e.g., first row)
-                if (row == 0 && col==0) {
-                    Image scaledImage = exampleIcon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
-                    JLabel pieceLabel = new JLabel(new ImageIcon(scaledImage));
-                    JLabel textLabel = new JLabel(piecesArray[0][1], SwingConstants.CENTER);
-                    squares[row][col].add(pieceLabel, BorderLayout.CENTER);
-                    squares[row][col].add(textLabel, BorderLayout.SOUTH);
-                }
-
-                
+                squares[row][col] = new JPanel();
+                squares[row][col].setBackground((row + col) % 2 == 0 ? new Color(255, 251, 240) : Color.PINK);
                 add(squares[row][col]);
             }
         }
+
+        piecesArray = new String[32][3];  
+        loadPieces();
+        
+        mergeSort(piecesArray, 0, piecesArray.length - 1); // Sort using Merge Sort
+
+        populateBoard(); // Update board after sorting
     }
 
+    private void mergeSort(String[][] arr, int left, int right) {
+        if (left < right) {
+            int mid = left + (right - left) / 2;
+            mergeSort(arr, left, mid);
+            mergeSort(arr, mid + 1, right);
+            merge(arr, left, mid, right);
+        }
+    }
 
-    // add your merge sort method here
-    // add a comment to every line of code that describes what the line is accomplishing
-    // your mergeSort method does not have to return any value
+    private void merge(String[][] arr, int left, int mid, int right) {
+        int n1 = mid - left + 1;
+        int n2 = right - mid;
+        String[][] leftArr = new String[n1][3];
+        String[][] rightArr = new String[n2][3];
+
+        for (int i = 0; i < n1; i++) leftArr[i] = arr[left + i];
+        for (int j = 0; j < n2; j++) rightArr[j] = arr[mid + 1 + j];
+
+        int i = 0, j = 0, k = left;
+        while (i < n1 && j < n2) {
+            if (Integer.parseInt(leftArr[i][2]) <= Integer.parseInt(rightArr[j][2])) {
+                arr[k++] = leftArr[i++];
+            } else {
+                arr[k++] = rightArr[j++];
+            }
+        }
+        while (i < n1) arr[k++] = leftArr[i++];
+        while (j < n2) arr[k++] = rightArr[j++];
+    }
+
+    private void populateBoard() {
+        int pieceRow = 0;
+        int squareName = 0;
+
+        for (int row = 0; row < SIZE; row++) {
+            for (int col = 0; col < SIZE; col++) {
+                if (pieceRow < piecesArray.length) {
+                    int pokePosition = Integer.parseInt(piecesArray[pieceRow][2]);
+                    if (squareName == pokePosition) {
+                        String imagePath = piecesArray[pieceRow][0];
+                        String hpText = piecesArray[pieceRow][1];
+
+                        ImageIcon icon = new ImageIcon(imagePath);
+                        Image scaledImage = icon.getImage().getScaledInstance(40, 42, Image.SCALE_SMOOTH);
+
+                        JLabel pieceLabel = new JLabel(new ImageIcon(scaledImage));
+                        JLabel textLabel = new JLabel(hpText, SwingConstants.CENTER);
+                        textLabel.setForeground(Color.BLACK);
+
+                        JPanel piecePanel = new JPanel(new BorderLayout());
+                        piecePanel.setOpaque(false);
+                        piecePanel.add(pieceLabel, BorderLayout.CENTER);
+                        piecePanel.add(textLabel, BorderLayout.SOUTH);
+
+                        squares[row][col].setLayout(new BorderLayout());
+                        squares[row][col].add(piecePanel, BorderLayout.CENTER);
+
+                        pieceRow++;
+                    }
+                }
+                squareName++;
+            }
+        }
+
+        revalidate();
+        repaint();
+    }
+
+    private void loadPieces() {
+        piecesArray[0] = new String[]{"lays.png", "HP:200", "9"};
+        piecesArray[1] = new String[]{"lays.png", "HP:200", "10"};
+        piecesArray[2] = new String[]{"lays.png", "HP:200", "11"};
+        piecesArray[3] = new String[]{"lays.png", "HP:200", "12"};
+        piecesArray[4] = new String[]{"lays.png", "HP:200", "13"};
+        piecesArray[5] = new String[]{"lays.png", "HP:200", "14"};
+        piecesArray[6] = new String[]{"pringles.png", "HP:172", "1"};
+        piecesArray[7] = new String[]{"fritos.png", "HP:100", "15"};
+        piecesArray[8] = new String[]{"cheetos.png", "HP:104", "16"};
+        piecesArray[9] = new String[]{"cheetos.png", "HP:123", "17"};
+        piecesArray[10] = new String[]{"cheetos.png", "HP:134", "18"};
+        piecesArray[11] = new String[]{"ruffles.png", "HP:155", "19"};
+        piecesArray[12] = new String[]{"sunchips.png", "HP:182", "20"};
+        piecesArray[13] = new String[]{"coke.png", "HP:111", "58"};
+        piecesArray[14] = new String[]{"sprite.png", "HP:300", "49"};
+        piecesArray[15] = new String[]{"jarritos.png", "HP:1", "50"};
+        piecesArray[16] = new String[]{"fanta.png", "HP:2", "51"};
+        piecesArray[17] = new String[]{"7up.png", "HP:3", "52"};
+        piecesArray[18] = new String[]{"m.png", "HP:4", "53"};
+        piecesArray[19] = new String[]{"canada-dry.png", "HP:5", "56"};
+        piecesArray[20] = new String[]{"pepsi.png", "HP:6", "57"};
+        piecesArray[21] = new String[]{"m.png", "HP:4", "54"};
+        piecesArray[22] = new String[]{"sunchips.png", "HP:182", "50"};
+        piecesArray[23] = new String[]{"m.png", "HP:4", "55"};
+        piecesArray[24] = new String[]{"pringles.png", "HP:172", "2"};
+        piecesArray[25] = new String[]{"pringles.png", "HP:172", "3"};
+        piecesArray[26] = new String[]{"pringles.png", "HP:172", "4"};
+        piecesArray[27] = new String[]{"pringles.png", "HP:172", "5"};
+        piecesArray[28] = new String[]{"pringles.png", "HP:172", "6"};
+        piecesArray[29] = new String[]{"pringles.png", "HP:172", "7"};
+        piecesArray[30] = new String[]{"coke.png", "HP:111", "58"};
+        piecesArray[31] = new String[]{"coke.png", "HP:111", "59"};
+    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
